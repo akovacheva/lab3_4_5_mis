@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 void main() {
   runApp(const MaterialApp(
@@ -107,29 +108,82 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class ExamList extends StatelessWidget {
+class ExamList extends StatefulWidget {
   final List<Map<String, String>> exams;
 
-  const ExamList({super.key, required this.exams});
+  const ExamList({Key? key, required this.exams}) : super(key: key);
+
+  @override
+  _ExamListState createState() => _ExamListState();
+}
+
+class _ExamListState extends State<ExamList> {
+  late CalendarFormat _calendarFormat;
+  late DateTime _focusedDay;
+  late DateTime _selectedDay;
+  late Map<DateTime, List<Map<String, String>>> _events;
+
+  @override
+  void initState() {
+    super.initState();
+    _calendarFormat = CalendarFormat.month;
+    _focusedDay = DateTime.now();
+    _selectedDay = _focusedDay;
+    _events = _generateEvents(widget.exams);
+  }
+
+  Map<DateTime, List<Map<String, String>>> _generateEvents(List<Map<String, String>> exams) {
+    Map<DateTime, List<Map<String, String>>> events = {};
+
+    for (var exam in exams) {
+      DateTime examDate = DateTime.parse(exam['date']!);
+      if (events.containsKey(examDate)) {
+        events[examDate]!.add(exam);
+      } else {
+        events[examDate] = [exam];
+      }
+    }
+
+    return events;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: exams.length,
-      itemBuilder: (context, index) {
-        return Card(
-          child: ListTile(
-            title: Text(
-              exams[index]['subject']!,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              'Date: ${exams[index]['date']}, Time: ${exams[index]['time']}',
-              style: const TextStyle(color: Colors.grey),
-            ),
+    return Column(
+      children: [
+        TableCalendar(
+          firstDay: DateTime.utc(2020, 01, 01),
+          lastDay: DateTime.utc(2030, 12, 31),
+          focusedDay: _focusedDay,
+          calendarFormat: _calendarFormat,
+          eventLoader: (day) => _events[day] ?? [], // Use the null-aware operator
+          onDaySelected: (selectedDay, focusedDay) {
+            setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay; // Update focused day to keep it in sync
+            });
+          },
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: widget.exams.length,
+            itemBuilder: (context, index) {
+              return Card(
+                child: ListTile(
+                  title: Text(
+                    widget.exams[index]['subject']!,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    'Date: ${widget.exams[index]['date']}, Time: ${widget.exams[index]['time']}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
