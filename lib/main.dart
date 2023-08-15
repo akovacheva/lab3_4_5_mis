@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'login_screen.dart';
 
-void main() {
-  runApp(const MaterialApp(
-    home: MyApp(),
-    localizationsDelegates: [
-      DefaultMaterialLocalizations.delegate,
-      DefaultWidgetsLocalizations.delegate,
-    ],
-    supportedLocales: [
-      Locale('en', 'US'),
-    ],
-  ));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -30,83 +28,67 @@ class _MyAppState extends State<MyApp> {
     {'subject': 'Linearna algebra', 'date': '2023-08-12', 'time': '2:30 PM'},
   ];
 
-  final TextEditingController subjectController = TextEditingController();
-  final TextEditingController dateController = TextEditingController();
-  final TextEditingController timeController = TextEditingController();
+  final List<Map<String, String>> predefinedUsers = [
+    {'email': 'ana@kovacheva.com', 'password': 'admin'},
+    {'email': 'user2@example.com', 'password': 'password2'},
+    // ... more users ...
+  ];
 
-  void _showAddSubjectDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Subject'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: subjectController,
-                decoration: const InputDecoration(labelText: 'Subject'),
-              ),
-              TextField(
-                controller: dateController,
-                decoration: const InputDecoration(labelText: 'Date'),
-              ),
-              TextField(
-                controller: timeController,
-                decoration: const InputDecoration(labelText: 'Time'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                String subject = subjectController.text;
-                String date = dateController.text;
-                String time = timeController.text;
-                if (subject.isNotEmpty && date.isNotEmpty && time.isNotEmpty) {
-                  // Add the subject with date and time to the list
-                  setState(() {
-                    exams.add({'subject': subject, 'date': date, 'time': time});
-                  });
-                  // Clear the controllers after adding
-                  subjectController.clear();
-                  dateController.clear();
-                  timeController.clear();
-                  Navigator.of(context).pop(); // Close the dialog
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
+  String? _loggedInUser;
+
+  void _loginUser(String email, String password) {
+    final user = predefinedUsers.firstWhere(
+          (user) => user['email'] == email && user['password'] == password,
+      orElse: () => {'email': '', 'password': ''}, // Return default values or an empty user
     );
+
+    if (user['email'] != '') {
+      setState(() {
+        _loggedInUser = user['email'];
+      });
+    }
+  }
+
+
+  void _logoutUser() {
+    setState(() {
+      _loggedInUser = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Exam Manager'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              _showAddSubjectDialog(context); // Pass the context to the method
-            },
-          ),
-        ],
+    return MaterialApp(
+      localizationsDelegates: const [
+        DefaultMaterialLocalizations.delegate,
+        DefaultWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', 'US'),
+      ],
+      home: _loggedInUser != null
+          ? Scaffold(
+        appBar: AppBar(
+          title: const Text('Exam Manager'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.exit_to_app),
+              onPressed: _logoutUser,
+            ),
+          ],
+        ),
+        body: ExamList(exams: exams),
+      )
+          : LoginScreen(
+        predefinedUsers: predefinedUsers,
+        onLogin: _loginUser,
       ),
-      body: ExamList(exams: exams),
     );
   }
 }
+
+// ... the rest of your code ...
+
 
 class ExamList extends StatefulWidget {
   final List<Map<String, String>> exams;
