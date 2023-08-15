@@ -6,8 +6,10 @@ import 'package:lab3_mis/main.dart';
 class LoginScreen extends StatefulWidget {
   final List<Map<String, String>> predefinedUsers;
   final Function(String email, String password) onLogin;
+  final VoidCallback onSkip;
+  final List<Map<String, String>> exams;
 
-  const LoginScreen({Key? key, required this.predefinedUsers, required this.onLogin})
+  const LoginScreen({Key? key, required this.predefinedUsers, required this.onLogin, required this.onSkip, required this.exams})
       : super(key: key);
 
   @override
@@ -40,9 +42,18 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _handleSkip() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => ExamList(exams: widget.exams)),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Material(
+      child: Scaffold(
       appBar: AppBar(
         title: Text('Login'),
       ),
@@ -65,9 +76,15 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: _loginWithEmailAndPassword,
               child: Text('Log In'),
             ),
-          ],
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: _handleSkip,
+              child: const Text('Skip Login'),
+            )
+    ],
         ),
       ),
+    ),
     );
   }
 }

@@ -10,7 +10,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(const MaterialApp(
+    home: MyApp(),
+  ));
 }
 
 class MyApp extends StatefulWidget {
@@ -75,6 +77,14 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+
+  void _handleSkip() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => ExamList(exams: exams)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -98,15 +108,18 @@ class _MyAppState extends State<MyApp> {
         ),
         body: ExamList(exams: exams),
       )
-          : LoginScreen(
-        predefinedUsers: predefinedUsers,
-        onLogin: _loginUser,
+          : Scaffold( // Add a Scaffold here
+        body: LoginScreen(
+          predefinedUsers: predefinedUsers,
+          onLogin: _loginUser,
+          onSkip: _handleSkip,
+          exams: exams,
+        ),
       ),
     );
   }
-}
 
-// ... the rest of your code ...
+}
 
 
 class ExamList extends StatefulWidget {
@@ -150,7 +163,12 @@ class _ExamListState extends State<ExamList> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Material(
+        child: Scaffold(
+        appBar: AppBar(
+        title: const Text('Exam List'),
+    ),
+      body: Column(
       children: [
         TableCalendar(
           firstDay: DateTime.utc(2020, 01, 01),
@@ -185,6 +203,8 @@ class _ExamListState extends State<ExamList> {
           ),
         ),
       ],
+    ),
+    ),
     );
   }
 }
