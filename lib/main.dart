@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'login_screen.dart';
 
@@ -9,7 +10,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -33,6 +34,24 @@ class _MyAppState extends State<MyApp> {
     {'email': 'user2@example.com', 'password': 'password2'},
     // ... more users ...
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    requestNotificationPermissions();
+  }
+
+  Future<void> requestNotificationPermissions() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    print("User granted permission: ${settings.authorizationStatus}");
+  }
+
 
   String? _loggedInUser;
 
